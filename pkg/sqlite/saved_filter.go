@@ -12,6 +12,7 @@ import (
 	"github.com/doug-martin/goqu/v9/exp"
 	"github.com/jmoiron/sqlx"
 
+	"github.com/stashapp/stash/pkg/auth"
 	"github.com/stashapp/stash/pkg/logger"
 	"github.com/stashapp/stash/pkg/models"
 )
@@ -23,6 +24,7 @@ const (
 
 type savedFilterRow struct {
 	ID           int               `db:"id" goqu:"skipinsert"`
+	UserID       int               `db:"user_id"`
 	Mode         models.FilterMode `db:"mode"`
 	Name         string            `db:"name"`
 	FindFilter   string            `db:"find_filter"`
@@ -107,13 +109,19 @@ func (qb *SavedFilterStore) table() exp.IdentifierExpression {
 	return qb.tableMgr.table
 }
 
-func (qb *SavedFilterStore) selectDataset() *goqu.SelectDataset {
-	return dialect.From(qb.table()).Select(qb.table().All())
+// selectDataset scopes every read to the calling user. With the multi-user
+// layer disabled auth.UserID returns the local administrator (1), which owns
+// every filter that existed before migration 86 -- so single-user installs see
+// exactly what they saw before.
+func (qb *SavedFilterStore) selectDataset(ctx context.Context) *goqu.SelectDataset {
+	return dialect.From(qb.table()).Select(qb.table().All()).
+		Where(qb.table().Col("user_id").Eq(auth.UserID(ctx)))
 }
 
 func (qb *SavedFilterStore) Create(ctx context.Context, newObject *models.SavedFilter) error {
 	var r savedFilterRow
 	r.fromSavedFilter(*newObject)
+	r.UserID = auth.UserID(ctx)
 
 	id, err := qb.tableMgr.insertID(ctx, r)
 	if err != nil {
@@ -131,8 +139,18 @@ func (qb *SavedFilterStore) Create(ctx context.Context, newObject *models.SavedF
 }
 
 func (qb *SavedFilterStore) Update(ctx context.Context, updatedObject *models.SavedFilter) error {
+	// refuse to update a filter belonging to someone else
+	existing, err := qb.find(ctx, updatedObject.ID)
+	if err != nil {
+		return err
+	}
+	if existing == nil {
+		return fmt.Errorf("saved filter %d not found", updatedObject.ID)
+	}
+
 	var r savedFilterRow
 	r.fromSavedFilter(*updatedObject)
+	r.UserID = auth.UserID(ctx)
 
 	if err := qb.tableMgr.updateByID(ctx, updatedObject.ID, r); err != nil {
 		return err
@@ -142,6 +160,15 @@ func (qb *SavedFilterStore) Update(ctx context.Context, updatedObject *models.Sa
 }
 
 func (qb *SavedFilterStore) Destroy(ctx context.Context, id int) error {
+	// refuse to destroy a filter belonging to someone else
+	existing, err := qb.find(ctx, id)
+	if err != nil {
+		return err
+	}
+	if existing == nil {
+		return fmt.Errorf("saved filter %d not found", id)
+	}
+
 	return qb.destroyExisting(ctx, []int{id})
 }
 
@@ -158,7 +185,7 @@ func (qb *SavedFilterStore) FindMany(ctx context.Context, ids []int, ignoreNotFo
 	ret := make([]*models.SavedFilter, len(ids))
 
 	table := qb.table()
-	q := qb.selectDataset().Prepared(true).Where(table.Col(idColumn).In(ids))
+	q := qb.selectDataset(ctx).Prepared(true).Where(table.Col(idColumn).In(ids))
 	unsorted, err := qb.getMany(ctx, q)
 	if err != nil {
 		return nil, err
@@ -182,7 +209,7 @@ func (qb *SavedFilterStore) FindMany(ctx context.Context, ids []int, ignoreNotFo
 
 // returns nil, sql.ErrNoRows if not found
 func (qb *SavedFilterStore) find(ctx context.Context, id int) (*models.SavedFilter, error) {
-	q := qb.selectDataset().Where(qb.tableMgr.byID(id))
+	q := qb.selectDataset(ctx).Where(qb.tableMgr.byID(id))
 
 	ret, err := qb.get(ctx, q)
 	if err != nil {
@@ -242,7 +269,7 @@ func (qb *SavedFilterStore) FindByMode(ctx context.Context, mode models.FilterMo
 		whereClause = table.Col("mode").Eq(mode)
 	}
 
-	sq := qb.selectDataset().Prepared(true).Where(whereClause).Order(table.Col("name").Asc())
+	sq := qb.selectDataset(ctx).Prepared(true).Where(whereClause).Order(table.Col("name").Asc())
 	ret, err := qb.getMany(ctx, sq)
 
 	if err != nil {
@@ -253,5 +280,5 @@ func (qb *SavedFilterStore) FindByMode(ctx context.Context, mode models.FilterMo
 }
 
 func (qb *SavedFilterStore) All(ctx context.Context) ([]*models.SavedFilter, error) {
-	return qb.getMany(ctx, qb.selectDataset())
+	return qb.getMany(ctx, qb.selectDataset(ctx))
 }
