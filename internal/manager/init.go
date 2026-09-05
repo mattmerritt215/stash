@@ -14,6 +14,7 @@ import (
 	"github.com/stashapp/stash/internal/dlna"
 	"github.com/stashapp/stash/internal/log"
 	"github.com/stashapp/stash/internal/manager/config"
+	"github.com/stashapp/stash/pkg/auth"
 	"github.com/stashapp/stash/pkg/ffmpeg"
 	"github.com/stashapp/stash/pkg/fsutil"
 	"github.com/stashapp/stash/pkg/gallery"
@@ -245,7 +246,47 @@ func (s *Manager) postInit(ctx context.Context) error {
 	s.RefreshFFMpeg(ctx)
 	s.RefreshStreamManager()
 
+	s.RefreshAuth(ctx)
+
 	return nil
+}
+
+// RefreshAuth (re)builds the multi-user layer. It is safe to call repeatedly:
+// it is a no-op once the manager is built, and it does nothing until the
+// database is open, since the users table lives there.
+//
+// Called from postInit and again from the API server, so that a fresh install
+// that had to run migrations first still ends up with auth wired.
+func (s *Manager) RefreshAuth(ctx context.Context) {
+	if s.Auth != nil && s.Auth.Enabled() {
+		return
+	}
+
+	cfg, err := auth.LoadConfig()
+	if err != nil {
+		logger.Errorf("auth: %v — multi-user layer disabled", err)
+		s.Auth = nil
+		return
+	}
+
+	if !cfg.Enabled() {
+		s.Auth = &auth.Manager{Config: cfg}
+		return
+	}
+
+	if err := s.Database.Ready(); err != nil {
+		logger.Debugf("auth: database not ready yet, deferring initialisation")
+		return
+	}
+
+	am, err := auth.NewManager(ctx, cfg, s.Database.SQLDB(), s.Config.GetSessionStoreKey(), s.Config.GetUsername())
+	if err != nil {
+		logger.Errorf("auth: could not initialise multi-user layer: %v", err)
+		return
+	}
+
+	s.Auth = am
+	logger.Infof("auth: multi-user layer active (mode %s)", cfg.Mode)
 }
 
 func (s *Manager) writeStashIcon() {
