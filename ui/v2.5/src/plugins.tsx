@@ -1,13 +1,13 @@
 import React, { useEffect } from "react";
 import { PatchFunction } from "./patch";
-import { usePlugins } from "./core/StashService";
 import { useMemoOnce } from "./hooks/state";
 import { uniq } from "lodash-es";
 import useScript, { useCSS } from "./hooks/useScript";
-import { PluginsQuery } from "./core/generated-graphql";
+import { PluginsQuery, usePluginsQuery } from "./core/generated-graphql";
 import { LoadingIndicator } from "./components/Shared/LoadingIndicator";
 import { FormattedMessage } from "react-intl";
 import { useToast } from "./hooks/Toast";
+import { usePermissions } from "./hooks/permissions";
 
 type PluginList = NonNullable<Required<PluginsQuery["plugins"]>>;
 
@@ -61,11 +61,18 @@ function sortPlugins(plugins: PluginList) {
 // returns true when all plugins are loaded, regardess of success or failure
 // if disableCustomizations is true, skip loading plugins entirely
 function useLoadPlugins(disableCustomizations?: boolean) {
+  // The plugins list is an admin-only surface (server-side: requires
+  // manage_server). Skip the query entirely for everyone else -- firing it
+  // unconditionally means every non-admin session eats a permission-denied
+  // error on every load, for a feature they can never use.
+  const { can } = usePermissions();
+  const canManagePlugins = can("manage_server");
+
   const {
     data: plugins,
     loading: pluginsLoading,
     error: pluginsError,
-  } = usePlugins();
+  } = usePluginsQuery({ skip: !canManagePlugins });
 
   const sortedPlugins = useMemoOnce(() => {
     return [
@@ -127,11 +134,20 @@ export const PluginsLoader: React.FC<
   const Toast = useToast();
   const { loading: loaded, error } = useLoadPlugins(disableCustomizations);
 
+  // Deliberately depend on `error` alone, not `Toast`. `useToast()` returns a
+  // new object on every render in which the ToastProvider's state changes --
+  // including the state change *this effect itself* causes by calling
+  // Toast.error(). With `Toast` in the dependency array that becomes a
+  // self-sustaining loop: call Toast.error -> ToastProvider re-renders ->
+  // useToast() returns a new object -> effect deps look "changed" -> effect
+  // reruns -> Toast.error again, forever. Depending on `error` only means the
+  // effect fires once when a load actually fails, not once per toast.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally omitting Toast, see above
   useEffect(() => {
     if (error) {
       Toast.error(`Error loading plugins: ${error.message}`);
     }
-  }, [Toast, error]);
+  }, [error]);
 
   if (!loaded && !error)
     return (
