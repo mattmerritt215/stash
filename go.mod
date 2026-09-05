@@ -11,6 +11,7 @@ require (
 	github.com/asticode/go-astisub v0.25.1
 	github.com/chromedp/cdproto v0.0.0-20250803210736-d308e07a266d
 	github.com/chromedp/chromedp v0.14.2
+	github.com/coreos/go-oidc/v3 v3.20.0
 	github.com/corona10/goimagehash v1.1.0
 	github.com/disintegration/imaging v1.6.2
 	github.com/dop251/goja v0.0.0-20231027120936-b396bb4c349d
@@ -61,6 +62,7 @@ require (
 	golang.org/x/crypto v0.52.0
 	golang.org/x/image v0.41.0
 	golang.org/x/net v0.55.0
+	golang.org/x/oauth2 v0.36.0
 	golang.org/x/sys v0.45.0
 	golang.org/x/term v0.43.0
 	golang.org/x/text v0.37.0
@@ -86,6 +88,7 @@ require (
 	github.com/enetx/http3 v1.0.7 // indirect
 	github.com/enetx/iter v0.0.0-20250912135656-f1583323588f // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
+	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
 	github.com/go-json-experiment/json v0.0.0-20250725192818-e39067aee2d2 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
