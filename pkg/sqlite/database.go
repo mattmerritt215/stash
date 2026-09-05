@@ -34,7 +34,7 @@ const (
 	cacheSizeEnv = "STASH_SQLITE_CACHE_SIZE"
 )
 
-var appSchemaVersion uint = 85
+var appSchemaVersion uint = 86
 
 //go:embed migrations/*.sql
 var migrationsBox embed.FS
@@ -125,6 +125,12 @@ func NewDatabase() *Database {
 	}
 
 	return ret
+}
+
+// SQLDB exposes the write handle so that the auth package can own its
+// users table without going through the store repository.
+func (db *Database) SQLDB() *sqlx.DB {
+	return db.writeDB
 }
 
 func (db *Database) SetBlobStoreOptions(options BlobStoreOptions) {
