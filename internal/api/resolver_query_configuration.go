@@ -13,7 +13,9 @@ import (
 )
 
 func (r *queryResolver) Configuration(ctx context.Context) (*ConfigResult, error) {
-	return makeConfigResult(), nil
+	// scopeConfigResult overlays the caller's personal interface/ui settings
+	// and strips the sections a non-administrator must not see.
+	return scopeConfigResult(ctx, makeConfigResult()), nil
 }
 
 func (r *queryResolver) Directory(ctx context.Context, path, locale *string) (*Directory, error) {
