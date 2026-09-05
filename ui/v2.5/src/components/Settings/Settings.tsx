@@ -20,6 +20,12 @@ import { SettingsSecurityPanel } from "./SettingsSecurityPanel";
 import Changelog from "../Changelog/Changelog";
 import { TroubleshootingModeButton } from "../TroubleshootingMode/TroubleshootingModeButton";
 import { useTroubleshootingMode } from "../TroubleshootingMode/useTroubleshootingMode";
+import {
+  SettingsTabGate,
+  firstAllowedSettingsTab,
+  settingsTabPermissions,
+  usePermissions,
+} from "src/hooks/permissions";
 
 const validTabs = [
   "tasks",
@@ -37,6 +43,7 @@ const validTabs = [
 ] as const;
 type TabKey = (typeof validTabs)[number];
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const defaultTab: TabKey = "tasks";
 
 function isTabKey(tab: string | null): tab is TabKey {
@@ -55,6 +62,7 @@ const SettingTabs: React.FC<{ tab: TabKey }> = ({ tab }) => {
       <Row>
         <Col id="settings-menu-container" sm={3} md={3} xl={2}>
           <Nav variant="pills" className="flex-column">
+            <SettingsTabGate>
             <Nav.Item>
               <LinkContainer to="/settings?tab=tasks">
                 <Nav.Link eventKey="tasks">
@@ -152,6 +160,7 @@ const SettingTabs: React.FC<{ tab: TabKey }> = ({ tab }) => {
               </div>
             </Nav.Item>
             {!troubleshootingModeActive && <TroubleshootingModeButton />}
+            </SettingsTabGate>
             <hr className="d-sm-none" />
           </Nav>
         </Col>
@@ -162,6 +171,7 @@ const SettingTabs: React.FC<{ tab: TabKey }> = ({ tab }) => {
           xl={{ offset: 2 }}
         >
           <Tab.Content className="mx-auto">
+            <SettingsTabGate>
             <Tab.Pane eventKey="library">
               <SettingsLibraryPanel />
             </Tab.Pane>
@@ -198,6 +208,7 @@ const SettingTabs: React.FC<{ tab: TabKey }> = ({ tab }) => {
             <Tab.Pane eventKey="about" unmountOnExit>
               <SettingsAboutPanel />
             </Tab.Pane>
+            </SettingsTabGate>
           </Tab.Content>
         </Col>
       </Row>
@@ -207,14 +218,35 @@ const SettingTabs: React.FC<{ tab: TabKey }> = ({ tab }) => {
 
 export const Settings: React.FC = () => {
   const location = useLocation();
+  const { can, loading } = usePermissions();
   const tab = new URLSearchParams(location.search).get("tab");
+
+  // Land on the first tab this user is actually allowed to open, rather than
+  // on "tasks", which a plain user cannot use.
+  const landingTab = firstAllowedSettingsTab(can, validTabs);
+
+  if (loading) {
+    return null;
+  }
 
   if (!isTabKey(tab)) {
     return (
       <Redirect
         to={{
           ...location,
-          search: `tab=${defaultTab}`,
+          search: `tab=${landingTab}`,
+        }}
+      />
+    );
+  }
+
+  const required = settingsTabPermissions[tab];
+  if (required !== undefined && !can(required)) {
+    return (
+      <Redirect
+        to={{
+          ...location,
+          search: `tab=${landingTab}`,
         }}
       />
     );
