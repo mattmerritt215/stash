@@ -197,10 +197,22 @@ var queryPermissions = map[string]Permission{
 	"scrapeMovieURL":        PermScrape,
 	"scrapeGroupURL":        PermScrape,
 
-	// jobs: enumerating the queue or looking up a job's status is task
-	// visibility, admin-only.
+	// jobQueue lists every job on the server regardless of who started it or
+	// what kind it is -- that's a genuine enumeration of server activity
+	// (an admin-only metadataClean run's description/error included), so it
+	// stays run_tasks.
 	"jobQueue": PermRunTasks,
-	"findJob":  PermRunTasks,
+
+	// findJob is different from jobQueue even though both are in the "jobs"
+	// family: the caller already has the specific job ID, almost always
+	// because they got it back from metadataScan (see mutationPermissions
+	// below, same reasoning). It isn't a listing/enumeration capability --
+	// it's "did the thing I was already trusted to start finish yet" -- so
+	// it belongs at the same tier as the mutation that produced the ID, not
+	// with jobQueue. Without this, a curator (or a content-adding service
+	// account) can kick off a scan but can never find out whether it
+	// finished, which file it landed as, or whether it errored.
+	"findJob": PermEditMetadata,
 
 	// The configuration query is readable by everyone because it carries the
 	// interface and ui settings the frontend needs in order to render at all.
