@@ -23,6 +23,13 @@ type MigrateJob struct {
 	BackupPath string
 	Config     migrateJobConfig
 	Database   *sqlite.Database
+
+	// OnComplete runs after the database has been migrated and reopened.
+	// The multi-user layer cannot initialise while the schema is out of date
+	// (its users table does not exist yet), so it has to be built here rather
+	// than only at startup -- otherwise stash keeps serving with
+	// authentication disabled until someone restarts it.
+	OnComplete func(ctx context.Context)
 }
 
 type databaseSchemaInfo struct {
@@ -118,6 +125,10 @@ func (s *MigrateJob) Execute(ctx context.Context, progress *job.Progress) error 
 	}
 
 	logger.Infof("Database migration complete")
+
+	if s.OnComplete != nil {
+		s.OnComplete(ctx)
+	}
 
 	return nil
 }
