@@ -193,7 +193,14 @@ Please disable it on the server and refresh the page.`);
     cache,
   });
 
-  // Watch for scan/clean tasks and reset cache when they complete
+  // Watch for scan/clean tasks and reset cache when they complete. This is
+  // opened unconditionally at client-creation time, before anything knows
+  // whether the signed-in user is even allowed to run tasks -- the server
+  // requires run_tasks for this subscription, so a user without it gets a
+  // permission-denied error over the socket. Without an `error` handler that
+  // surfaces as an uncaught ApolloError on every load. A user who can't run
+  // scans was never going to see a scan-complete event anyway, so just not
+  // resetting the store for them is correct -- there is nothing to recover.
   client
     .subscribe<GQL.ScanCompleteSubscribeSubscription>({
       query: GQL.ScanCompleteSubscribeDocument,
@@ -201,6 +208,9 @@ Please disable it on the server and refresh the page.`);
     .subscribe({
       next: () => {
         client.resetStore();
+      },
+      error: () => {
+        // not permitted (or transiently unreachable) -- nothing to do.
       },
     });
 
