@@ -16,6 +16,7 @@ import (
 	"github.com/stashapp/stash/internal/dlna"
 	"github.com/stashapp/stash/internal/log"
 	"github.com/stashapp/stash/internal/manager/config"
+	"github.com/stashapp/stash/pkg/auth"
 	"github.com/stashapp/stash/pkg/ffmpeg"
 	"github.com/stashapp/stash/pkg/fsutil"
 	"github.com/stashapp/stash/pkg/job"
@@ -51,6 +52,9 @@ type Manager struct {
 
 	DownloadStore *DownloadStore
 	SessionStore  *session.Store
+	// Auth is the multi-user identity and permission layer. It is nil until
+	// the database is open, and disabled unless STASH_AUTH_MODE is set.
+	Auth *auth.Manager
 
 	PluginCache  *plugin.Cache
 	ScraperCache *scraper.Cache
