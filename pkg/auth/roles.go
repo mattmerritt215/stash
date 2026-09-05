@@ -343,10 +343,22 @@ var mutationPermissions = map[string]Permission{
 	"stashBoxBatchStudioTag":       PermScrape,
 	"stashBoxBatchTagTag":          PermScrape,
 
-	// tasks: async jobs -- scanning the library, generating previews,
-	// identifying scenes against stash-box, cleaning up missing files, or
-	// stopping a running job. Admin-only.
-	"metadataScan":           PermRunTasks,
+	// metadataScan is how a file that landed on disk outside a GraphQL
+	// mutation (an rsync, a download tool, yt-dlp via a bookmarklet-style
+	// integration) gets picked up into the library -- it's the mechanism
+	// for adding content, not server administration, so it belongs at the
+	// same tier as sceneCreate/tagCreate rather than lumped in with the
+	// tasks below. A curator who can already create and edit scenes
+	// directly gains nothing from being blocked here; they'd just be
+	// unable to *finish* adding something they were already trusted to add.
+	"metadataScan": PermEditMetadata,
+
+	// tasks: async jobs that are either destructive (metadataClean removes
+	// library entries for files that vanished), reach out to external
+	// services (metadataIdentify queries stash-box), operate across the
+	// whole library regardless of who added what (metadataGenerate,
+	// metadataAutoTag), or can interrupt someone else's in-flight job
+	// (stopJob/stopAllJobs). These stay admin-only.
 	"metadataGenerate":       PermRunTasks,
 	"metadataAutoTag":        PermRunTasks,
 	"metadataClean":          PermRunTasks,
