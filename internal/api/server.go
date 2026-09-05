@@ -34,6 +34,7 @@ import (
 	"github.com/stashapp/stash/internal/build"
 	"github.com/stashapp/stash/internal/manager"
 	"github.com/stashapp/stash/internal/manager/config"
+	"github.com/stashapp/stash/pkg/auth"
 	"github.com/stashapp/stash/pkg/fsutil"
 	"github.com/stashapp/stash/pkg/logger"
 	"github.com/stashapp/stash/pkg/plugin"
@@ -126,6 +127,18 @@ func Initialize() (*Server, error) {
 	r.Use(cors.AllowAll().Handler)
 	r.Use(RequestIPMiddleware)
 	r.Use(authenticateHandler())
+
+	// multi-user identity + permission layer. Runs after stash's own
+	// authentication so that the built-in local login still works as a
+	// break-glass path when the IdP is unavailable.
+	//
+	// Installed unconditionally and resolved per request: on a database that
+	// still needs migrating there is no users table yet, so the layer cannot
+	// initialise at startup. Binding it here only when it happens to be ready
+	// would leave stash serving with authentication disabled until someone
+	// restarted it -- exactly the window in which the migration is confirmed.
+	mgr.RefreshAuth(context.TODO())
+	r.Use(authMiddleware(getProxyPrefix))
 	visitedPluginHandler := mgr.SessionStore.VisitedPluginHandler()
 	r.Use(visitedPluginHandler)
 
@@ -194,6 +207,9 @@ func Initialize() (*Server, error) {
 
 	gqlSrv.SetErrorPresenter(gqlErrorHandler)
 
+	// permission enforcement for every GraphQL operation
+	gqlSrv.AroundOperations(auth.GQLGate())
+
 	gqlHandlerFunc := func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
 		gqlSrv.ServeHTTP(w, r)
@@ -227,6 +243,10 @@ func Initialize() (*Server, error) {
 	r.HandleFunc("/customlocales", customLocalesHandler(cfg))
 
 	staticLoginUI := statigz.FileServer(ui.LoginUIBox.(fs.ReadDirFS))
+
+	// mounted unconditionally for the same reason; the handlers answer 503
+	// while the provider is unavailable
+	r.Mount("/oidc", oidcRoutes())
 
 	r.Get(loginEndpoint, handleLogin())
 	r.Post(loginEndpoint, handleLoginPost())
