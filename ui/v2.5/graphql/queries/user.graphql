@@ -1,0 +1,32 @@
+query Me {
+  me {
+    auth_mode
+    logout_url
+    permissions
+    user {
+      id
+      username
+      email
+      display_name
+      role
+      disabled
+      has_api_key
+      created_at
+      last_login_at
+    }
+  }
+}
+
+query Users {
+  users {
+    id
+    username
+    email
+    display_name
+    role
+    disabled
+    has_api_key
+    created_at
+    last_login_at
+  }
+}

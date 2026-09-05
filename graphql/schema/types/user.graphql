@@ -1,0 +1,54 @@
+"""
+A stash identity. Users are provisioned from the identity provider on first
+sign-in; stash never stores their password.
+"""
+type StashUser {
+  id: ID!
+  username: String!
+  email: String
+  display_name: String
+  role: UserRole!
+  disabled: Boolean!
+  """
+  True when the user has a personal API key issued. The key itself is never
+  returned again after creation.
+  """
+  has_api_key: Boolean!
+  created_at: Timestamp!
+  last_login_at: Timestamp
+}
+
+enum UserRole {
+  "Browse and have playback tracked."
+  GUEST
+  "Browse, track playback and personalise their own view."
+  USER
+  "Additionally edit library metadata and run scrapers."
+  CURATOR
+  "Full access, including server administration."
+  ADMIN
+}
+
+"The caller's own identity and effective permissions."
+type CurrentUser {
+  """
+  Null when the multi-user layer is disabled; the UI then behaves as upstream
+  stash.
+  """
+  user: StashUser
+  """
+  Permission slugs the caller holds, e.g. view_library, personalise,
+  manage_server.
+  """
+  permissions: [String!]!
+  "One of disabled, oidc, header, hybrid."
+  auth_mode: String!
+  "Where the UI should send the user to sign out."
+  logout_url: String!
+}
+
+input UserUpdateInput {
+  id: ID!
+  role: UserRole
+  disabled: Boolean
+}

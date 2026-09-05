@@ -1,0 +1,24 @@
+mutation UserUpdate($input: UserUpdateInput!) {
+  userUpdate(input: $input) {
+    id
+    username
+    role
+    disabled
+  }
+}
+
+mutation UserDestroy($id: ID!) {
+  userDestroy(id: $id)
+}
+
+mutation UserGenerateApiKey($id: ID!) {
+  userGenerateApiKey(id: $id)
+}
+
+mutation GenerateOwnApiKey {
+  generateOwnApiKey
+}
+
+mutation RevokeOwnApiKey {
+  revokeOwnApiKey
+}
