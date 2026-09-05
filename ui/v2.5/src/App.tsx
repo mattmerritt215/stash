@@ -37,6 +37,7 @@ import {
 } from "./hooks/Config";
 import { ManualProvider } from "./components/Help/context";
 import { InteractiveProvider } from "./hooks/Interactive/context";
+import { PermissionProvider } from "./hooks/permissions";
 import { ReleaseNotesDialog } from "./components/Dialogs/ReleaseNotesDialog";
 import { releaseNotes } from "./docs/en/ReleaseNotes";
 import { getPlatformURL } from "./core/createClient";
@@ -357,34 +358,36 @@ export const App: React.FC = () => {
         formats={intlFormats}
       >
         <ToastProvider>
-          <PluginsLoader
-            disableCustomizations={
-              config.data?.configuration?.interface?.disableCustomizations ??
-              false
-            }
-          >
-            <AppContainer>
-              <ConfigurationProvider configuration={config.data!.configuration}>
-                {maybeRenderReleaseNotes()}
-                <ConnectionMonitor />
-                <TroubleshootingModeOverlay />
-                <Suspense fallback={<LoadingIndicator />}>
-                  <LightboxProvider>
-                    <ManualProvider>
-                      <InteractiveProvider>
-                        <Helmet
-                          {...titleProps}
-                          htmlAttributes={htmlAttributes}
-                        />
-                        {maybeRenderNavbar()}
-                        <MainContainer>{renderContent()}</MainContainer>
-                      </InteractiveProvider>
-                    </ManualProvider>
-                  </LightboxProvider>
-                </Suspense>
-              </ConfigurationProvider>
-            </AppContainer>
-          </PluginsLoader>
+          <PermissionProvider>
+            <PluginsLoader
+              disableCustomizations={
+                config.data?.configuration?.interface?.disableCustomizations ??
+                false
+              }
+            >
+              <AppContainer>
+                <ConfigurationProvider configuration={config.data!.configuration}>
+                  {maybeRenderReleaseNotes()}
+                  <ConnectionMonitor />
+                  <TroubleshootingModeOverlay />
+                  <Suspense fallback={<LoadingIndicator />}>
+                    <LightboxProvider>
+                      <ManualProvider>
+                        <InteractiveProvider>
+                          <Helmet
+                            {...titleProps}
+                            htmlAttributes={htmlAttributes}
+                          />
+                          {maybeRenderNavbar()}
+                          <MainContainer>{renderContent()}</MainContainer>
+                        </InteractiveProvider>
+                      </ManualProvider>
+                    </LightboxProvider>
+                  </Suspense>
+                </ConfigurationProvider>
+              </AppContainer>
+            </PluginsLoader>
+          </PermissionProvider>
         </ToastProvider>
       </IntlProvider>
     </ErrorBoundary>
