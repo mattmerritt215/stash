@@ -9,8 +9,11 @@ import (
 	"path"
 	"strings"
 
+	"github.com/go-chi/chi/v5"
+
 	"github.com/stashapp/stash/internal/manager"
 	"github.com/stashapp/stash/internal/manager/config"
+	"github.com/stashapp/stash/pkg/auth"
 	"github.com/stashapp/stash/pkg/logger"
 	"github.com/stashapp/stash/pkg/session"
 	"github.com/stashapp/stash/pkg/signedurl"
@@ -18,7 +21,7 @@ import (
 
 func allowUnauthenticated(r *http.Request) bool {
 	// #2715 - allow access to UI files
-	return strings.HasPrefix(r.URL.Path, loginEndpoint) || r.URL.Path == logoutEndpoint || r.URL.Path == "/css" || strings.HasPrefix(r.URL.Path, "/assets")
+	return strings.HasPrefix(r.URL.Path, "/oidc/") || strings.HasPrefix(r.URL.Path, loginEndpoint) || r.URL.Path == logoutEndpoint || r.URL.Path == "/css" || strings.HasPrefix(r.URL.Path, "/assets")
 }
 
 // authenticateSignedRequest checks if the request is a valid signed media request.
@@ -89,22 +92,35 @@ func authenticateHandler() func(http.Handler) http.Handler {
 				return
 			}
 
-			userID, err := manager.GetInstance().SessionStore.Authenticate(w, r)
+			mgr := manager.GetInstance()
+			multiUser := mgr.Auth != nil && mgr.Auth.Enabled()
+
+			userID, err := mgr.SessionStore.Authenticate(w, r)
 			if err != nil {
 				if !errors.Is(err, session.ErrUnauthorized) {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
 
-				// unauthorized error
-				w.Header().Add("WWW-Authenticate", "FormBased")
-				w.WriteHeader(http.StatusUnauthorized)
-				return
+				// With the multi-user layer active, a credential stash does
+				// not recognise (a per-user API key, an OIDC session cookie)
+				// is not an error here -- hand the request on and let the auth
+				// middleware resolve it. Otherwise fail as upstream does.
+				if !multiUser {
+					w.Header().Add("WWW-Authenticate", "FormBased")
+					w.WriteHeader(http.StatusUnauthorized)
+					return
+				}
+				userID = ""
 			}
 
-			// reject connections from the public internet if authentication is not configured
-			// don't apply for new systems
-			if !c.IsNewSystem() && !c.HasCredentials() {
+			// Reject connections from the public internet if authentication is
+			// not configured. The multi-user layer IS authentication, so this
+			// legacy guard must not fire when it is active -- otherwise stash
+			// refuses every public request in oidc mode despite being fully
+			// protected, and the only workarounds are to set local credentials
+			// you do not want or to whitelist the internet.
+			if !multiUser && !c.IsNewSystem() && !c.HasCredentials() {
 				requestIP, err := getRequestIPFromCtx(ctx)
 				if err != nil {
 					logger.Errorf("error getting request IP: %v", err)
@@ -118,7 +134,7 @@ func authenticateHandler() func(http.Handler) http.Handler {
 				}
 			}
 
-			if c.HasCredentials() {
+			if c.HasCredentials() && !multiUser {
 				// authentication is required
 				if userID == "" && !allowUnauthenticated(r) {
 					// if graphql or a non-webpage was requested, we just return a forbidden error
@@ -150,6 +166,13 @@ func authenticateHandler() func(http.Handler) http.Handler {
 			ctx = session.SetCurrentUserID(ctx, userID)
 
 			r = r.WithContext(ctx)
+
+			// tell the multi-user layer that stash's own login already
+			// authenticated this request, so it can adopt the local
+			// administrator identity instead of bouncing to the IdP.
+			if userID != "" {
+				r = auth.MarkLocalSession(r)
+			}
 
 			next.ServeHTTP(w, r)
 		})
@@ -184,4 +207,36 @@ func matchIPWhitelist(c *config.Config, requestIP net.IP) bool {
 		}
 	}
 	return false
+}
+
+// authMiddleware resolves the multi-user layer per request rather than
+// capturing it at server start. The layer cannot initialise while the database
+// is pending migration (no users table), and it must engage the moment it can
+// without requiring a restart. It is a pass-through while disabled.
+func authMiddleware(proxyPrefix func(*http.Request) string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			am := manager.GetInstance().Auth
+			if am == nil || !am.Enabled() {
+				next.ServeHTTP(w, r)
+				return
+			}
+			am.Middleware(proxyPrefix)(next).ServeHTTP(w, r)
+		})
+	}
+}
+
+// oidcRoutes defers to the auth manager at request time, so the endpoints
+// exist even if the provider was unreachable at startup.
+func oidcRoutes() chi.Router {
+	r := chi.NewRouter()
+	r.HandleFunc("/*", func(w http.ResponseWriter, req *http.Request) {
+		am := manager.GetInstance().Auth
+		if am == nil || !am.Enabled() {
+			http.Error(w, "the multi-user layer is not enabled", http.StatusServiceUnavailable)
+			return
+		}
+		am.Routes().ServeHTTP(w, req)
+	})
+	return r
 }
