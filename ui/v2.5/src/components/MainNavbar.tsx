@@ -22,6 +22,7 @@ import { Icon } from "src/components/Shared/Icon";
 import { useConfigurationContext } from "src/hooks/Config";
 import { ManualStateContext } from "./Help/context";
 import { SettingsButton } from "./SettingsButton";
+import { usePermissions } from "src/hooks/permissions";
 import {
   faBars,
   faChartColumn,
@@ -210,6 +211,7 @@ export const MainNavbar: React.FC = () => {
   // react-bootstrap typing bug
   const navbarRef = useRef<HTMLElement | null>(null);
   const intl = useIntl();
+  const permissions = usePermissions();
 
   const maybeCollapse = useCallback((event: Event) => {
     if (
@@ -278,6 +280,27 @@ export const MainNavbar: React.FC = () => {
   });
 
   function maybeRenderLogout() {
+    // With the multi-user layer active the sign-out target comes from the
+    // server, so an OIDC session ends at the identity provider rather than
+    // just dropping stash's own cookie.
+    if (permissions.multiUser) {
+      return (
+        <Button
+          className="minimal logout-button d-flex align-items-center"
+          href={`${baseURL}${permissions.logoutUrl.replace(/^\//, "")}`}
+          title={
+            permissions.user
+              ? `${intl.formatMessage({ id: "actions.logout" })} (${
+                  permissions.user.username
+                })`
+              : intl.formatMessage({ id: "actions.logout" })
+          }
+        >
+          <Icon icon={faSignOutAlt} />
+        </Button>
+      );
+    }
+
     if (SessionUtils.isLoggedIn()) {
       return (
         <Button
