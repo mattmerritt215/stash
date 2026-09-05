@@ -45,6 +45,8 @@ func (r *mutationResolver) Migrate(ctx context.Context, input manager.MigrateInp
 		BackupPath: input.BackupPath,
 		Config:     mgr.Config,
 		Database:   mgr.Database,
+		// bring up the multi-user layer as soon as the schema supports it
+		OnComplete: func(ctx context.Context) { mgr.RefreshAuth(ctx) },
 	}
 
 	if err := t.PreExecute(); err != nil {
