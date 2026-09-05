@@ -483,6 +483,13 @@ func (r *mutationResolver) ConfigureGeneral(ctx context.Context, input ConfigGen
 func (r *mutationResolver) ConfigureInterface(ctx context.Context, input ConfigInterfaceInput) (*ConfigInterfaceResult, error) {
 	c := config.GetInstance()
 
+	// Non-administrators store interface changes as personal overrides on
+	// top of the server defaults, so one user changing the theme or the menu
+	// does not change it for everyone.
+	if u := scopedUITarget(ctx); u != nil {
+		return scopedConfigureInterface(ctx, u, input, makeConfigInterfaceResult())
+	}
+
 	r.setConfigBool(config.SFWContentMode, input.SfwContentMode)
 
 	if input.MenuItems != nil {
@@ -688,6 +695,18 @@ func (r *mutationResolver) GenerateAPIKey(ctx context.Context, input GenerateAPI
 func (r *mutationResolver) ConfigureUI(ctx context.Context, input map[string]interface{}, partial map[string]interface{}) (map[string]interface{}, error) {
 	c := config.GetInstance()
 
+	// Non-administrators personalise their own view; only an admin edits the
+	// server-wide defaults that new users inherit.
+	if u := scopedUITarget(ctx); u != nil {
+		if input != nil {
+			input = convertMapJSONNumbers(input)
+		}
+		if partial != nil {
+			partial = convertMapJSONNumbers(partial)
+		}
+		return scopedConfigureUI(ctx, u, input, partial)
+	}
+
 	if input != nil {
 		// #5483 - convert JSON numbers to float64 or int64
 		input = convertMapJSONNumbers(input)
@@ -713,7 +732,12 @@ func (r *mutationResolver) ConfigureUI(ctx context.Context, input map[string]int
 func (r *mutationResolver) ConfigureUISetting(ctx context.Context, key string, value interface{}) (map[string]interface{}, error) {
 	c := config.GetInstance()
 
-	cfg := utils.NestedMap(c.GetUIConfiguration())
+	base := c.GetUIConfiguration()
+	if u := scopedUITarget(ctx); u != nil {
+		base = u.UI()
+	}
+
+	cfg := utils.NestedMap(base)
 
 	// #5483 - convert JSON numbers to float64 or int64
 	if m, ok := value.(map[string]interface{}); ok {
