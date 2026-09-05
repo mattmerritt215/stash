@@ -273,6 +273,12 @@ type Query {
   # Get everything with minimal metadata
 
   # Version
+  "The caller's own identity and effective permissions."
+  me: CurrentUser!
+
+  "All stash users. Requires the manage_server permission."
+  users: [StashUser!]!
+
   version: Version!
 
   # LatestVersion
@@ -595,6 +601,17 @@ type Mutation {
   addTempDLNAIP(input: AddTempDLNAIPInput!): Boolean!
   "Removes an IP address from the temporary DLNA whitelist"
   removeTempDLNAIP(input: RemoveTempDLNAIPInput!): Boolean!
+
+  "Change a user's role or disabled state. Requires the manage_server permission."
+  userUpdate(input: UserUpdateInput!): StashUser!
+  "Delete a user and all of their per-user state. Requires the manage_server permission."
+  userDestroy(id: ID!): Boolean!
+  "Issue a personal API key for another user. Requires the manage_server permission."
+  userGenerateApiKey(id: ID!): String!
+  "Issue a personal API key for the caller. The plaintext key is returned once and never again."
+  generateOwnApiKey: String!
+  "Revoke the caller's personal API key."
+  revokeOwnApiKey: Boolean!
 }
 
 type Subscription {
