@@ -64,3 +64,6 @@ node_modules
 dist
 .DS_Store
 /.local*
+
+# Claude Code project instructions (local-only)
+CLAUDE.md
