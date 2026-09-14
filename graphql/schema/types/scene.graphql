@@ -48,6 +48,8 @@ type Scene {
   # rating expressed as 1-100
   rating100: Int
   organized: Boolean!
+  "Whether the current user has excluded this scene from random selection"
+  random_excluded: Boolean!
   o_counter: Int
   interactive: Boolean!
   interactive_speed: Int

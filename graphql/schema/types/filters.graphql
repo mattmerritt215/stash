@@ -284,6 +284,8 @@ input SceneFilterType {
   rating100: IntCriterionInput
   "Filter by organized"
   organized: Boolean
+  "Filter by whether the current user has excluded this scene from random selection"
+  random_excluded: Boolean
   "Filter by o-counter"
   o_counter: IntCriterionInput
   "Filter Scenes by duplication criteria"

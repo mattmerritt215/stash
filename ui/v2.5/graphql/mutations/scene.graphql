@@ -82,6 +82,13 @@ mutation SceneResetO($id: ID!) {
   sceneResetO(id: $id)
 }
 
+mutation SceneSetRandomExcluded($id: ID!, $value: Boolean!) {
+  sceneSetRandomExcluded(id: $id, value: $value) {
+    id
+    random_excluded
+  }
+}
+
 mutation SceneDestroy(
   $id: ID!
   $delete_file: Boolean

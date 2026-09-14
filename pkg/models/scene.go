@@ -49,6 +49,9 @@ type SceneFilterType struct {
 	Rating100 *IntCriterionInput `json:"rating100"`
 	// Filter by organized
 	Organized *bool `json:"organized"`
+	// Filter by whether the current user has excluded this scene from
+	// random selection
+	RandomExcluded *bool `json:"random_excluded"`
 	// Filter by o-counter
 	OCounter *IntCriterionInput `json:"o_counter"`
 	// Filter Scenes by duplication criteria

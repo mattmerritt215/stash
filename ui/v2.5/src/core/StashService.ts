@@ -197,6 +197,18 @@ export const querySceneByPathRegex = (filter: GQL.FindFilterType) =>
     variables: { filter },
   });
 
+// picks one scene at random from the whole library, excluding any scene the
+// current user has marked as excluded from random selection
+export const queryRandomScene = () =>
+  client.query<GQL.FindScenesQuery>({
+    query: GQL.FindScenesDocument,
+    fetchPolicy: "network-only",
+    variables: {
+      filter: { per_page: 1, sort: "random" },
+      scene_filter: { random_excluded: false },
+    },
+  });
+
 export const useFindImage = (id: string) =>
   GQL.useFindImageQuery({ variables: { id } });
 
@@ -861,6 +873,9 @@ export const useSceneResetO = (id: string) =>
       ]);
     },
   });
+
+export const useSceneSetRandomExcluded = () =>
+  GQL.useSceneSetRandomExcludedMutation();
 
 export const useSceneResetActivity = (
   id: string,

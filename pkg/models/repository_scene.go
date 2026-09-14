@@ -114,6 +114,10 @@ type SceneReader interface {
 	PlayDuration(ctx context.Context) (float64, error)
 	GetCover(ctx context.Context, sceneID int) ([]byte, error)
 	HasCover(ctx context.Context, sceneID int) (bool, error)
+
+	// GetRandomExcluded reports whether the context's user has excluded
+	// this scene from random selection.
+	GetRandomExcluded(ctx context.Context, id int) (bool, error)
 }
 
 type OHistoryWriter interface {
@@ -143,6 +147,10 @@ type SceneWriter interface {
 	SaveActivity(ctx context.Context, sceneID int, resumeTime *float64, playDuration *float64) (bool, error)
 	ResetActivity(ctx context.Context, sceneID int, resetResume bool, resetDuration bool) (bool, error)
 	CustomFieldsWriter
+
+	// SetRandomExcluded sets whether the context's user excludes this
+	// scene from random selection.
+	SetRandomExcluded(ctx context.Context, id int, value bool) error
 }
 
 // SceneReaderWriter provides all scene methods.

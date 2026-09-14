@@ -23,9 +23,12 @@ import { useConfigurationContext } from "src/hooks/Config";
 import { ManualStateContext } from "./Help/context";
 import { SettingsButton } from "./SettingsButton";
 import { usePermissions } from "src/hooks/permissions";
+import { useToast } from "src/hooks/Toast";
+import { queryRandomScene } from "src/core/StashService";
 import {
   faBars,
   faChartColumn,
+  faDice,
   faFilm,
   faHeart,
   faImage,
@@ -94,6 +97,14 @@ const messages = defineMessages({
   statistics: {
     id: "statistics",
     defaultMessage: "Statistics",
+  },
+  random: {
+    id: "random",
+    defaultMessage: "Random",
+  },
+  random_empty: {
+    id: "random_empty",
+    defaultMessage: "No scenes available to play randomly.",
   },
 });
 
@@ -212,6 +223,21 @@ export const MainNavbar: React.FC = () => {
   const navbarRef = useRef<HTMLElement | null>(null);
   const intl = useIntl();
   const permissions = usePermissions();
+  const Toast = useToast();
+
+  const onRandomClick = useCallback(async () => {
+    try {
+      const result = await queryRandomScene();
+      const scene = result.data?.findScenes.scenes[0];
+      if (!scene) {
+        Toast.error(intl.formatMessage(messages.random_empty));
+        return;
+      }
+      history.push(`/scenes/${scene.id}`);
+    } catch (e) {
+      Toast.error(e);
+    }
+  }, [Toast, history, intl]);
 
   const maybeCollapse = useCallback((event: Event) => {
     if (
@@ -335,6 +361,21 @@ export const MainNavbar: React.FC = () => {
             </span>
           </Button>
         </Nav.Link>
+        {permissions.can("view_library") && (
+          <Button
+            className="minimal nav-utility random-scene"
+            title={intl.formatMessage(messages.random)}
+            onClick={() => {
+              handleDismiss();
+              onRandomClick();
+            }}
+          >
+            <Icon icon={faDice} />
+            <span className="d-none d-sm-inline">
+              {intl.formatMessage(messages.random)}
+            </span>
+          </Button>
+        )}
         <NavLink
           className="nav-utility"
           exact

@@ -612,6 +612,52 @@ input[type="range"].blue-slider {
   }
 }
 
+.random-excluded-button {
+  &.not-random-excluded {
+    color: rgba(191, 204, 214, 0.5);
+  }
+
+  &.random-excluded {
+    color: #b33f3f;
+  }
+}
+
+button.btn.random-exclude-button {
+  left: 0.7rem;
+  opacity: 1;
+  padding: 0;
+  position: absolute;
+  top: 0.7rem;
+  transition: opacity 0.5s;
+  z-index: 8;
+
+  &.not-random-excluded {
+    color: rgba(191, 204, 214, 0.5);
+    filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.9));
+
+    &.hide-not-random-excluded {
+      opacity: 0;
+    }
+  }
+
+  &.random-excluded {
+    color: #b33f3f;
+    filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.9));
+  }
+
+  &:hover,
+  &:active,
+  &:focus,
+  &:active:focus {
+    background: none;
+    box-shadow: none;
+  }
+}
+
+.scene-card:hover button.btn.random-exclude-button.not-random-excluded {
+  opacity: 1;
+}
+
 .o-counter .dropdown-toggle {
   background-color: rgba(0, 0, 0, 0);
   border: none;

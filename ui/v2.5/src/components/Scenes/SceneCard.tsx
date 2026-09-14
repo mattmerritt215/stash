@@ -31,6 +31,9 @@ import { GroupTag } from "../Groups/GroupTag";
 import { FileSize } from "../Shared/FileSize";
 import { OCounterButton } from "../Shared/CountButton";
 import { defaultPreviewVolume } from "src/core/config";
+import { RandomExcludeIcon } from "../Shared/RandomExcludeIcon";
+import { usePermissions } from "src/hooks/permissions";
+import { useSceneSetRandomExcluded } from "src/core/StashService";
 
 interface IScenePreviewProps {
   isPortrait: boolean;
@@ -346,13 +349,30 @@ const SceneCardDetails = React.memo(
 
 const SceneCardOverlays = React.memo(
   PatchComponent("SceneCard.Overlays", (props: ISceneCardProps) => {
-    const ret = useMemo(() => {
-      return (
-        <StudioOverlay studio={props.scene.studio} disabled={props.selecting} />
-      );
-    }, [props.scene.studio, props.selecting]);
+    const permissions = usePermissions();
+    const [setRandomExcluded] = useSceneSetRandomExcluded();
 
-    return ret;
+    function onToggleRandomExcluded(v: boolean) {
+      setRandomExcluded({
+        variables: {
+          id: props.scene.id,
+          value: v,
+        },
+      });
+    }
+
+    return (
+      <>
+        <StudioOverlay studio={props.scene.studio} disabled={props.selecting} />
+        {!props.selecting && permissions.can("personalise") && (
+          <RandomExcludeIcon
+            excluded={props.scene.random_excluded}
+            onToggleExcluded={onToggleRandomExcluded}
+            className="hide-not-random-excluded"
+          />
+        )}
+      </>
+    );
   })
 );
 

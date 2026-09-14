@@ -123,6 +123,7 @@ func (qb *sceneFilterHandler) criterionHandler() criterionHandler {
 		intCriterionHandler(sceneFilter.Rating100, "scenes.rating", nil),
 		qb.oCountCriterionHandler(sceneFilter.OCounter),
 		boolCriterionHandler(sceneFilter.Organized, "scenes.organized", nil),
+		userBoolOnlyCriterionHandler(sceneFilter.RandomExcluded, sceneUserState, "random_excluded"),
 
 		floatIntCriterionHandler(sceneFilter.Duration, "video_files.duration", qb.addVideoFilesTable),
 		resolutionCriterionHandler(sceneFilter.Resolution, "video_files.height", "video_files.width", qb.addVideoFilesTable),

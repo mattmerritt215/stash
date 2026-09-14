@@ -276,6 +276,11 @@ var mutationPermissions = map[string]Permission{
 	"generateOwnApiKey":  PermPersonalise,
 	"revokeOwnApiKey":    PermPersonalise,
 
+	// excluding a scene from *your own* random pool is exactly the same
+	// tier as favouriting or rating it -- a personal viewing preference,
+	// not a change to the library.
+	"sceneSetRandomExcluded": PermPersonalise,
+
 	// library metadata editing
 	"sceneCreate":             PermEditMetadata,
 	"sceneUpdate":             PermEditMetadata,

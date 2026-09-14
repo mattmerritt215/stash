@@ -612,6 +612,9 @@ type Mutation {
   generateOwnApiKey: String!
   "Revoke the caller's personal API key."
   revokeOwnApiKey: Boolean!
+
+  "Set whether the caller excludes a scene from random selection."
+  sceneSetRandomExcluded(id: ID!, value: Boolean!): Scene!
 }
 
 type Subscription {

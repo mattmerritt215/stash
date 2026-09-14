@@ -130,6 +130,56 @@ func userFloatCriterionHandler(c *models.FloatCriterionInput, s userStateSpec, c
 	}
 }
 
+// userColOnly is userCol's equivalent for a column that exists only in the
+// overlay table, with no upstream base-table counterpart -- e.g. a
+// fork-original per-user flag. A missing overlay row means "unset" (the
+// given zero-value fallback), not "inherit the base value", because there
+// is no base value.
+func (s userStateSpec) userColOnly(ctx context.Context, col string, fallback string) string {
+	uid := auth.UserID(ctx)
+	return fmt.Sprintf(
+		"COALESCE((SELECT `%s`.`%s` FROM `%s` WHERE `%s`.`%s` = `%s`.`id` AND `%s`.`user_id` = %d), %s)",
+		s.StateTable, col,
+		s.StateTable,
+		s.StateTable, s.FKColumn, s.BaseTable,
+		s.StateTable, uid,
+		fallback,
+	)
+}
+
+// userBoolOnlyCriterionHandler is userBoolCriterionHandler's equivalent for
+// an overlay-only boolean column (see userColOnly). It has no addJoinFn
+// parameter because userColOnly is always a self-contained correlated
+// subquery.
+func userBoolOnlyCriterionHandler(c *bool, s userStateSpec, col string) criterionHandlerFunc {
+	return func(ctx context.Context, f *filterBuilder) {
+		if c == nil {
+			return
+		}
+		v := "0"
+		if *c {
+			v = "1"
+		}
+		f.addWhere(fmt.Sprintf("%s = %s", s.userColOnly(ctx, col, "0"), v))
+	}
+}
+
+// ---------------------------------------------------------------------------
+// point reads
+// ---------------------------------------------------------------------------
+
+// getUserBoolOnlyState point-reads one overlay-only boolean column (see
+// userColOnly) for the context's user, defaulting to false when no overlay
+// row exists for the object.
+func getUserBoolOnlyState(ctx context.Context, s userStateSpec, objectID int, col string) (bool, error) {
+	q := fmt.Sprintf("SELECT %s FROM `%s` WHERE `id` = ?", s.userColOnly(ctx, col, "0"), s.BaseTable)
+	var ret bool
+	if err := dbWrapper.Get(ctx, &ret, q, objectID); err != nil {
+		return false, err
+	}
+	return ret, nil
+}
+
 // ---------------------------------------------------------------------------
 // writes
 // ---------------------------------------------------------------------------

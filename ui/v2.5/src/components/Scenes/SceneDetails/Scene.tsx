@@ -17,6 +17,7 @@ import {
   useSceneIncrementO,
   useSceneGenerateScreenshot,
   useSceneUpdate,
+  useSceneSetRandomExcluded,
   queryFindScenes,
   queryFindScenesByID,
   useSceneIncrementPlayCount,
@@ -32,6 +33,8 @@ import SceneQueue, { QueuedScene } from "src/models/sceneQueue";
 import { ListFilterModel } from "src/models/list-filter/filter";
 import Mousetrap from "mousetrap";
 import { OrganizedButton } from "./OrganizedButton";
+import { RandomExcludedButton } from "./RandomExcludedButton";
+import { usePermissions } from "src/hooks/permissions";
 import { useConfigurationContext } from "src/hooks/Config";
 import {
   getAbLoopPlugin,
@@ -193,6 +196,8 @@ const ScenePage: React.FC<IProps> = PatchComponent("ScenePage", (props) => {
   const intl = useIntl();
   const history = useHistory();
   const [updateScene] = useSceneUpdate();
+  const [setRandomExcluded] = useSceneSetRandomExcluded();
+  const permissions = usePermissions();
   const [generateScreenshot] = useSceneGenerateScreenshot();
   const [screenshotJobID, setScreenshotJobID] = useState<string>();
   const { configuration } = useConfigurationContext();
@@ -214,6 +219,7 @@ const ScenePage: React.FC<IProps> = PatchComponent("ScenePage", (props) => {
   }
 
   const [organizedLoading, setOrganizedLoading] = useState(false);
+  const [randomExcludedLoading, setRandomExcludedLoading] = useState(false);
 
   const [activeTabKey, setActiveTabKey] = useState("scene-details-panel");
 
@@ -340,6 +346,22 @@ const ScenePage: React.FC<IProps> = PatchComponent("ScenePage", (props) => {
       Toast.error(e);
     } finally {
       setOrganizedLoading(false);
+    }
+  };
+
+  const onRandomExcludedClick = async () => {
+    try {
+      setRandomExcludedLoading(true);
+      await setRandomExcluded({
+        variables: {
+          id: scene.id,
+          value: !scene.random_excluded,
+        },
+      });
+    } catch (e) {
+      Toast.error(e);
+    } finally {
+      setRandomExcludedLoading(false);
     }
   };
 
@@ -751,6 +773,15 @@ const ScenePage: React.FC<IProps> = PatchComponent("ScenePage", (props) => {
                   onClick={onOrganizedClick}
                 />
               </span>
+              {permissions.can("personalise") && (
+                <span>
+                  <RandomExcludedButton
+                    loading={randomExcludedLoading}
+                    excluded={scene.random_excluded}
+                    onClick={onRandomExcludedClick}
+                  />
+                </span>
+              )}
               <span>{renderOperations()}</span>
             </span>
           </div>
