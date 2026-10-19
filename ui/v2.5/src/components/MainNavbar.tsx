@@ -24,7 +24,7 @@ import { ManualStateContext } from "./Help/context";
 import { SettingsButton } from "./SettingsButton";
 import { usePermissions } from "src/hooks/permissions";
 import { useToast } from "src/hooks/Toast";
-import { queryRandomScene } from "src/core/StashService";
+import { queryRandomScene, useConfigureInterface } from "src/core/StashService";
 import {
   faBars,
   faChartColumn,
@@ -34,9 +34,11 @@ import {
   faImage,
   faImages,
   faMapMarkerAlt,
+  faMoon,
   faPlayCircle,
   faQuestionCircle,
   faSignOutAlt,
+  faSun,
   faTag,
   faTimes,
   faUser,
@@ -105,6 +107,14 @@ const messages = defineMessages({
   random_empty: {
     id: "random_empty",
     defaultMessage: "No scenes available to play randomly.",
+  },
+  theme_switch_to_light: {
+    id: "theme_switch_to_light",
+    defaultMessage: "Switch to light theme",
+  },
+  theme_switch_to_dark: {
+    id: "theme_switch_to_dark",
+    defaultMessage: "Switch to dark theme",
   },
 });
 
@@ -238,6 +248,18 @@ export const MainNavbar: React.FC = () => {
       Toast.error(e);
     }
   }, [Toast, history, intl]);
+
+  const isLightTheme = configuration?.interface.theme === "light";
+  const [configureInterface] = useConfigureInterface();
+  const onThemeToggleClick = useCallback(async () => {
+    try {
+      await configureInterface({
+        variables: { input: { theme: isLightTheme ? "dark" : "light" } },
+      });
+    } catch (e) {
+      Toast.error(e);
+    }
+  }, [configureInterface, isLightTheme, Toast]);
 
   const maybeCollapse = useCallback((event: Event) => {
     if (
@@ -374,6 +396,22 @@ export const MainNavbar: React.FC = () => {
             <span className="d-none d-sm-inline">
               {intl.formatMessage(messages.random)}
             </span>
+          </Button>
+        )}
+        {permissions.can("personalise") && (
+          <Button
+            className="minimal nav-utility theme-toggle"
+            title={intl.formatMessage(
+              isLightTheme
+                ? messages.theme_switch_to_dark
+                : messages.theme_switch_to_light
+            )}
+            onClick={() => {
+              handleDismiss();
+              onThemeToggleClick();
+            }}
+          >
+            <Icon icon={isLightTheme ? faMoon : faSun} />
           </Button>
         )}
         <NavLink

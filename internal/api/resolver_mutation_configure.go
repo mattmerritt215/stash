@@ -513,6 +513,7 @@ func (r *mutationResolver) ConfigureInterface(ctx context.Context, input ConfigI
 	r.setConfigBool(config.ContinuePlaylistDefault, input.ContinuePlaylistDefault)
 
 	r.setConfigString(config.Language, input.Language)
+	r.setConfigString(config.Theme, input.Theme)
 
 	if input.ImageLightbox != nil {
 		options := input.ImageLightbox

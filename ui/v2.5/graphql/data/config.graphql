@@ -101,6 +101,7 @@ fragment ConfigInterfaceData on ConfigInterfaceResult {
   customLocalesEnabled
   disableCustomizations
   language
+  theme
   imageLightbox {
     slideshowDelay
     displayMode

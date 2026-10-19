@@ -313,7 +313,10 @@ export const App: React.FC = () => {
 
   const title = config.data?.configuration.ui.title || "Stash";
   const titleProps = makeTitleProps(title);
-  const htmlAttributes = { lang: language };
+  const theme = config.data?.configuration.interface.theme;
+  const htmlAttributes = theme
+    ? { lang: language, "data-theme": theme }
+    : { lang: language };
 
   if (!messages) {
     return null;

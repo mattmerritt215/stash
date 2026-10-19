@@ -167,6 +167,7 @@ func makeConfigInterfaceResult() *ConfigInterfaceResult {
 	customLocalesEnabled := config.GetCustomLocalesEnabled()
 	disableCustomizations := config.GetDisableCustomizations()
 	language := config.GetLanguage()
+	theme := config.GetTheme()
 	handyKey := config.GetHandyKey()
 	scriptOffset := config.GetFunscriptOffset()
 	useStashHostedFunscript := config.GetUseStashHostedFunscript()
@@ -195,6 +196,7 @@ func makeConfigInterfaceResult() *ConfigInterfaceResult {
 		CustomLocalesEnabled:         &customLocalesEnabled,
 		DisableCustomizations:        &disableCustomizations,
 		Language:                     &language,
+		Theme:                        &theme,
 
 		ImageLightbox: &imageLightboxOptions,
 

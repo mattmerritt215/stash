@@ -10,6 +10,12 @@
       content="width=device-width, initial-scale=1, maximum-scale=1"
     />
     <meta name="theme-color" content="%COLOR%" />
+    <!-- Stash's stock UI is always dark; "dark light" tells the browser that
+         before the app mounts and (if installed) a custom theme's own
+         data-theme/color-scheme take over. Present mainly so browsers that
+         auto-darken unthemed pages don't misjudge the page during the gap
+         before React hydrates and sets the real value. -->
+    <meta name="color-scheme" content="dark light" />
     <link rel="manifest" crossorigin="use-credentials" href="manifest.json" />
     <title>Stash</title>
   </head>

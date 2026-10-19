@@ -434,6 +434,9 @@ input ConfigInterfaceInput {
   "Interface language"
   language: String
 
+  "Light/dark display preference, set as the data-theme attribute on the document root for custom CSS to key off. Opaque to Stash itself -- meaning and valid values are defined by whatever custom CSS is installed. Empty/unset means no preference. When the multi-user layer is active, a non-admin's value is personal and does not affect other users or the server default."
+  theme: String
+
   imageLightbox: ConfigImageLightboxInput
 
   "Set to true to disable creating new objects via the dropdown menus"
@@ -510,6 +513,9 @@ type ConfigInterfaceResult {
 
   "Interface language"
   language: String
+
+  "Light/dark display preference, set as the data-theme attribute on the document root for custom CSS to key off. Opaque to Stash itself -- meaning and valid values are defined by whatever custom CSS is installed. Empty/unset means no preference. When the multi-user layer is active, a non-admin's value is personal and does not affect other users or the server default."
+  theme: String
 
   imageLightbox: ConfigImageLightboxResult!
 

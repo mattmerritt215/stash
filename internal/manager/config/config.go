@@ -196,6 +196,12 @@ const (
 	// i18n
 	Language = "language"
 
+	// fork: light/dark display preference, opaque to Stash itself -- see
+	// GetTheme. Under the multi-user layer this is scoped per-user like any
+	// other interface setting (internal/api/config_scope.go); this key only
+	// holds the server-wide default / single-user value.
+	Theme = "theme"
+
 	// served directories
 	// this should be manually configured only
 	CustomServedFolders = "custom_served_folders"
@@ -862,6 +868,12 @@ func (i *Config) GetLanguage() string {
 	}
 
 	return ret
+}
+
+// GetTheme returns the light/dark display preference. Empty means no
+// preference has been set; the frontend decides the fallback.
+func (i *Config) GetTheme() string {
+	return i.getString(Theme)
 }
 
 // IsCalculateMD5 returns true if MD5 checksums should be generated for
