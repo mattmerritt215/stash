@@ -16,6 +16,8 @@ import { useStudioUpdate } from "src/core/StashService";
 import { useConfigurationContext } from "src/hooks/Config";
 import { faTag, faBox } from "@fortawesome/free-solid-svg-icons";
 import { OCounterButton } from "../Shared/CountButton";
+import { ContinuousPlayButton } from "../Shared/ContinuousPlayButton";
+import { usePermissions } from "src/hooks/permissions";
 
 interface IProps {
   studio: GQL.StudioDataFragment;
@@ -84,6 +86,7 @@ export const StudioCard: React.FC<IProps> = PatchComponent(
     onSelectedChanged,
   }) => {
     const [updateStudio] = useStudioUpdate();
+    const permissions = usePermissions();
     const { configuration } = useConfigurationContext();
     const showChildContent = configuration?.ui?.showChildStudioContent ?? false;
 
@@ -269,12 +272,20 @@ export const StudioCard: React.FC<IProps> = PatchComponent(
           </div>
         }
         overlays={
-          <FavoriteIcon
-            favorite={studio.favorite}
-            onToggleFavorite={(v) => onToggleFavorite(v)}
-            size="2x"
-            className="hide-not-favorite"
-          />
+          <>
+            <FavoriteIcon
+              favorite={studio.favorite}
+              onToggleFavorite={(v) => onToggleFavorite(v)}
+              size="2x"
+              className="hide-not-favorite"
+            />
+            {!!sceneCount && permissions.can("view_library") && (
+              <ContinuousPlayButton
+                category={{ studio }}
+                className="continuous-play-overlay"
+              />
+            )}
+          </>
         }
         popovers={maybeRenderPopoverButtonGroup()}
         selected={selected}

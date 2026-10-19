@@ -34,6 +34,7 @@ import { defaultPreviewVolume } from "src/core/config";
 import { RandomExcludeIcon } from "../Shared/RandomExcludeIcon";
 import { usePermissions } from "src/hooks/permissions";
 import { useSceneSetRandomExcluded } from "src/core/StashService";
+import { ContinuousPlayButton } from "../Shared/ContinuousPlayButton";
 
 interface IScenePreviewProps {
   isPortrait: boolean;
@@ -140,6 +141,7 @@ const Description: React.FC<{
 
 const SceneCardPopovers = React.memo(
   PatchComponent("SceneCard.Popovers", (props: ISceneCardProps) => {
+    const permissions = usePermissions();
     const file = useMemo(
       () => (props.scene.files.length > 0 ? props.scene.files[0] : undefined),
       [props.scene]
@@ -275,6 +277,14 @@ const SceneCardPopovers = React.memo(
       }
     }
 
+    function maybeRenderContinuousPlay() {
+      if (!props.scene.studio || !permissions.can("view_library")) return;
+
+      return (
+        <ContinuousPlayButton category={{ studio: props.scene.studio }} />
+      );
+    }
+
     function maybeRenderDupeCopies() {
       const phash = file
         ? file.fingerprints.find((fp) => fp.type === "phash")
@@ -304,6 +314,7 @@ const SceneCardPopovers = React.memo(
           props.scene?.o_counter ||
           props.scene.galleries.length > 0 ||
           props.scene.organized ||
+          props.scene.studio ||
           sceneNumber !== undefined)
       ) {
         return (
@@ -319,6 +330,7 @@ const SceneCardPopovers = React.memo(
               {maybeRenderGallery()}
               {maybeRenderOrganized()}
               {maybeRenderDupeCopies()}
+              {maybeRenderContinuousPlay()}
             </ButtonGroup>
           </>
         );

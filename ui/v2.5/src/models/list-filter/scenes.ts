@@ -37,6 +37,7 @@ import { PathCriterionOption } from "./criteria/path";
 import { OrientationCriterionOption } from "./criteria/orientation";
 import { CustomFieldsCriterionOption } from "./criteria/custom-fields";
 import { FolderCriterionOption } from "./criteria/folder";
+import { RandomExcludedCriterionOption } from "./criteria/random-excluded";
 
 const defaultSortBy = "date";
 const sortByOptions = [
@@ -105,6 +106,7 @@ const criterionOptions = [
   PhashCriterionOption,
   DuplicatedCriterionOption,
   OrganizedCriterionOption,
+  RandomExcludedCriterionOption,
   RatingCriterionOption,
   createMandatoryNumberCriterionOption("o_counter", "o_count", {
     sfwMessageID: "o_count_sfw",

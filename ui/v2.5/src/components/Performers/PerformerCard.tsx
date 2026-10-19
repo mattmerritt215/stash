@@ -26,6 +26,8 @@ import { PatchComponent } from "src/patch";
 import { ExternalLinksButton } from "../Shared/ExternalLinksButton";
 import { useConfigurationContext } from "src/hooks/Config";
 import { OCounterButton } from "../Shared/CountButton";
+import { ContinuousPlayButton } from "../Shared/ContinuousPlayButton";
+import { usePermissions } from "src/hooks/permissions";
 
 export interface IPerformerCardExtraCriteria {
   scenes?: ModifierCriterion<CriterionValue>[];
@@ -173,6 +175,7 @@ const PerformerCardOverlays: React.FC<IPerformerCardProps> = PatchComponent(
     const { configuration } = useConfigurationContext();
     const uiConfig = configuration?.ui;
     const [updatePerformer] = usePerformerUpdate();
+    const permissions = usePermissions();
 
     function onToggleFavorite(v: boolean) {
       if (performer.id) {
@@ -276,6 +279,12 @@ const PerformerCardOverlays: React.FC<IPerformerCardProps> = PatchComponent(
           size="2x"
           className="hide-not-favorite"
         />
+        {!!performer.scene_count && permissions.can("view_library") && (
+          <ContinuousPlayButton
+            category={{ performer }}
+            className="continuous-play-overlay"
+          />
+        )}
         {maybeRenderRatingBanner()}
         {maybeRenderLinks()}
         {maybeRenderFlag()}
