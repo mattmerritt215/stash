@@ -53,7 +53,7 @@ const defaultContext: IPermissionContext = {
 export const PermissionContext =
   createContext<IPermissionContext>(defaultContext);
 
-export const PermissionProvider: React.FC<React.PropsWithChildren<{}>> = ({
+export const PermissionProvider: React.FC<React.PropsWithChildren<object>> = ({
   children,
 }) => {
   const { data, loading } = GQL.useMeQuery({
@@ -152,7 +152,7 @@ function eventKeyOf(node: React.ReactNode): string | undefined {
  * gating in one place instead of scattering conditionals through the JSX,
  * which matters for rebasing onto upstream.
  */
-export const SettingsTabGate: React.FC<React.PropsWithChildren<{}>> = ({
+export const SettingsTabGate: React.FC<React.PropsWithChildren<object>> = ({
   children,
 }) => {
   const { can } = usePermissions();

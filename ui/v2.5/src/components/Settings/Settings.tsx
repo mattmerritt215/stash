@@ -43,9 +43,6 @@ const validTabs = [
 ] as const;
 type TabKey = (typeof validTabs)[number];
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const defaultTab: TabKey = "tasks";
-
 function isTabKey(tab: string | null): tab is TabKey {
   return validTabs.includes(tab as TabKey);
 }
