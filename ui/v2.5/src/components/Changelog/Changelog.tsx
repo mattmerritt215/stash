@@ -36,6 +36,7 @@ import V0280 from "src/docs/en/Changelog/v0280.md";
 import V0290 from "src/docs/en/Changelog/v0290.md";
 import V0300 from "src/docs/en/Changelog/v0300.md";
 import V0310 from "src/docs/en/Changelog/v0310.md";
+import V0311Multiuser1 from "src/docs/en/Changelog/v0311-multiuser1.md";
 
 import V0290ReleaseNotes from "src/docs/en/ReleaseNotes/v0290.md";
 
@@ -76,9 +77,9 @@ const Changelog: React.FC = () => {
   // after new release:
   // add entry to releases, using the current* fields
   // then update the current fields.
-  const currentVersion = stashVersion || "v0.31.0";
+  const currentVersion = stashVersion || "v0.31.1-multiuser.1";
   const currentDate = buildDate;
-  const currentPage = V0310;
+  const currentPage = V0311Multiuser1;
 
   const releases: IStashRelease[] = [
     {
@@ -86,6 +87,10 @@ const Changelog: React.FC = () => {
       date: currentDate,
       page: currentPage,
       defaultOpen: true,
+    },
+    {
+      version: "v0.31.0",
+      page: V0310,
     },
     {
       version: "v0.30.1",
