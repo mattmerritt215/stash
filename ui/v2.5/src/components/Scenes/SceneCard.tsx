@@ -280,9 +280,7 @@ const SceneCardPopovers = React.memo(
     function maybeRenderContinuousPlay() {
       if (!props.scene.studio || !permissions.can("view_library")) return;
 
-      return (
-        <ContinuousPlayButton category={{ studio: props.scene.studio }} />
-      );
+      return <ContinuousPlayButton category={{ studio: props.scene.studio }} />;
     }
 
     function maybeRenderDupeCopies() {

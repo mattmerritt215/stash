@@ -36,8 +36,7 @@ function makeContinuousPlayFilter(category: ContinuousPlayCategory) {
     criterion.value.items = [
       {
         id: category.performer.id,
-        label:
-          category.performer.name || `Performer ${category.performer.id}`,
+        label: category.performer.name || `Performer ${category.performer.id}`,
       },
     ];
     filter.criteria.push(criterion);

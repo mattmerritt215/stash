@@ -369,7 +369,9 @@ export const App: React.FC = () => {
               }
             >
               <AppContainer>
-                <ConfigurationProvider configuration={config.data!.configuration}>
+                <ConfigurationProvider
+                  configuration={config.data!.configuration}
+                >
                   {maybeRenderReleaseNotes()}
                   <ConnectionMonitor />
                   <TroubleshootingModeOverlay />

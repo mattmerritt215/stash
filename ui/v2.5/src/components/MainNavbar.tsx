@@ -449,10 +449,7 @@ export const MainNavbar: React.FC = () => {
             </Nav.Link>
           ))}
           {permissions.can("view_library") && showRandom && (
-            <Nav.Link
-              as="div"
-              className="col-4 col-sm-3 col-md-2 col-lg-auto"
-            >
+            <Nav.Link as="div" className="col-4 col-sm-3 col-md-2 col-lg-auto">
               <Button
                 className="minimal random-scene p-4 p-xl-2 d-flex d-xl-inline-block flex-column justify-content-between align-items-center"
                 title={intl.formatMessage(messages.random)}
