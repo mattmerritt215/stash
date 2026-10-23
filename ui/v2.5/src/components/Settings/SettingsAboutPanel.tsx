@@ -1,7 +1,9 @@
 import React from "react";
 import { Button } from "react-bootstrap";
 import { useIntl } from "react-intl";
+import { faHeart } from "@fortawesome/free-solid-svg-icons";
 import { useLatestVersion } from "src/core/StashService";
+import { Icon } from "../Shared/Icon";
 import { ExternalLink } from "../Shared/ExternalLink";
 import { ConstantSetting, SettingGroup } from "./Inputs";
 import { SettingSection } from "./SettingSection";
@@ -170,7 +172,14 @@ export const SettingsAboutPanel: React.FC = () => {
               )}
             </p>
           </div>
-          <div />
+          <div>
+            <ExternalLink href="https://opencollective.com/stashapp">
+              <Button variant="primary">
+                <Icon icon={faHeart} className="mr-2" />
+                {intl.formatMessage({ id: "donate", defaultMessage: "Donate" })}
+              </Button>
+            </ExternalLink>
+          </div>
         </div>
       </SettingSection>
     </>

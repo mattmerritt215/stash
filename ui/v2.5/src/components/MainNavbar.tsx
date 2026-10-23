@@ -30,7 +30,6 @@ import {
   faChartColumn,
   faDice,
   faFilm,
-  faHeart,
   faImage,
   faImages,
   faMapMarkerAlt,
@@ -91,10 +90,6 @@ const messages = defineMessages({
   sceneTagger: {
     id: "sceneTagger",
     defaultMessage: "Scene Tagger",
-  },
-  donate: {
-    id: "donate",
-    defaultMessage: "Donate",
   },
   statistics: {
     id: "statistics",
@@ -227,6 +222,11 @@ export const MainNavbar: React.FC = () => {
     return allMenuItems.filter((menuItem) =>
       cfgMenuItems!.includes(menuItem.name)
     );
+  }, [configuration]);
+
+  const showRandom = useMemo(() => {
+    const cfgMenuItems = configuration?.interface.menuItems;
+    return !cfgMenuItems || cfgMenuItems.includes("random");
   }, [configuration]);
 
   // react-bootstrap typing bug
@@ -367,37 +367,6 @@ export const MainNavbar: React.FC = () => {
   function renderUtilityButtons() {
     return (
       <>
-        <Nav.Link
-          className="nav-utility"
-          href="https://opencollective.com/stashapp"
-          target="_blank"
-          onClick={handleDismiss}
-        >
-          <Button
-            className="minimal donate"
-            title={intl.formatMessage({ id: "donate" })}
-          >
-            <Icon icon={faHeart} />
-            <span className="d-none d-sm-inline">
-              {intl.formatMessage(messages.donate)}
-            </span>
-          </Button>
-        </Nav.Link>
-        {permissions.can("view_library") && (
-          <Button
-            className="minimal nav-utility random-scene"
-            title={intl.formatMessage(messages.random)}
-            onClick={() => {
-              handleDismiss();
-              onRandomClick();
-            }}
-          >
-            <Icon icon={faDice} />
-            <span className="d-none d-sm-inline">
-              {intl.formatMessage(messages.random)}
-            </span>
-          </Button>
-        )}
         {permissions.can("personalise") && (
           <Button
             className="minimal nav-utility theme-toggle"
@@ -479,6 +448,27 @@ export const MainNavbar: React.FC = () => {
               </LinkContainer>
             </Nav.Link>
           ))}
+          {permissions.can("view_library") && showRandom && (
+            <Nav.Link
+              as="div"
+              className="col-4 col-sm-3 col-md-2 col-lg-auto"
+            >
+              <Button
+                className="minimal random-scene p-4 p-xl-2 d-flex d-xl-inline-block flex-column justify-content-between align-items-center"
+                title={intl.formatMessage(messages.random)}
+                onClick={() => {
+                  handleDismiss();
+                  onRandomClick();
+                }}
+              >
+                <Icon
+                  icon={faDice}
+                  className="nav-menu-icon d-block d-xl-inline mb-2 mb-xl-0"
+                />
+                <span>{intl.formatMessage(messages.random)}</span>
+              </Button>
+            </Nav.Link>
+          )}
         </MainNavbarMenuItems>
         <Nav>
           <MainNavbarUtilityItems>
