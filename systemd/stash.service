@@ -1,0 +1,50 @@
+# Example systemd unit for stash-multiuser.
+#
+# Install:
+#   sudo useradd --system --home-dir /var/lib/stash --create-home stash   # if the user doesn't already exist
+#   sudo mkdir -p /opt/stash /etc/stash
+#   sudo cp stash-linux /opt/stash/stash && sudo chmod +x /opt/stash/stash
+#   sudo cp stash.env.example /etc/stash/env   # then edit it
+#   sudo chown root:stash /etc/stash/env && sudo chmod 640 /etc/stash/env
+#   sudo cp stash.service /etc/systemd/system/stash.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now stash
+#
+# Upgrading in place later is just: stop the service, replace
+# /opt/stash/stash with the new release binary, start it again.
+# /etc/stash/env and the data directory are untouched by an upgrade.
+
+[Unit]
+Description=stash-multiuser
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=stash
+Group=stash
+WorkingDirectory=/var/lib/stash
+
+# Everything stash needs to find its own config.yml lives here too, so this
+# is the only place state for the process is configured.
+Environment=STASH_CONFIG_FILE=/var/lib/stash/config.yml
+
+# Auth / multi-user config -- never put secrets here, they belong in
+# /etc/stash/env where only root and the stash user can read them.
+EnvironmentFile=/etc/stash/env
+
+ExecStart=/opt/stash/stash
+Restart=on-failure
+RestartSec=5
+
+# Hardening. Loosen NoNewPrivileges/ProtectSystem if stash needs to write
+# outside WorkingDirectory (e.g. your media library lives elsewhere) --
+# add those paths to ReadWritePaths rather than disabling the sandboxing.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/stash
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

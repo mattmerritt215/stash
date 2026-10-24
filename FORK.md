@@ -89,7 +89,8 @@ same tier as the thing that started it.
 **Config lives in `/etc/stash/env`, not `config.yml`.** Nothing in stash's
 viper schema is touched, so upstream config changes never collide, and the
 OIDC client secret stays out of the stash data directory. `STASH_AUTH_MODE`
-unset → the binary is stock stash.
+unset → the binary is stock stash. See [`systemd/`](systemd/) for an example
+unit file and env file documenting every variable.
 
 **Enforcement is a gqlgen `AroundOperations` middleware, not a schema
 directive.** A directive would mean regenerating `generated_exec.go`. The
