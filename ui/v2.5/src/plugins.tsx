@@ -61,18 +61,18 @@ function sortPlugins(plugins: PluginList) {
 // returns true when all plugins are loaded, regardess of success or failure
 // if disableCustomizations is true, skip loading plugins entirely
 function useLoadPlugins(disableCustomizations?: boolean) {
-  // The plugins list is an admin-only surface (server-side: requires
-  // manage_server). Skip the query entirely for everyone else -- firing it
-  // unconditionally means every non-admin session eats a permission-denied
-  // error on every load, for a feature they can never use.
+  // Server-side this requires view_library (see pkg/auth/roles.go), not
+  // manage_server: it's how every signed-in user's session loads each
+  // enabled plugin's CSS/JS, not just an admin surface -- a custom theme
+  // delivered as a plugin (e.g. fagmob-neon) needs this to run for everyone.
   const { can } = usePermissions();
-  const canManagePlugins = can("manage_server");
+  const canViewLibrary = can("view_library");
 
   const {
     data: plugins,
     loading: pluginsLoading,
     error: pluginsError,
-  } = usePluginsQuery({ skip: !canManagePlugins });
+  } = usePluginsQuery({ skip: !canViewLibrary });
 
   const sortedPlugins = useMemoOnce(() => {
     return [

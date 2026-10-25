@@ -234,9 +234,24 @@ var queryPermissions = map[string]Permission{
 	// internal/api/system_status_scope.go.
 	"systemStatus": PermViewLibrary,
 
+	// Same reasoning as configuration/systemStatus: the frontend's
+	// PluginsLoader fires this on every page load (not just for admins) to
+	// inject each enabled plugin's CSS/JS -- that's how a custom theme like
+	// fagmob-neon applies to every signed-in user, not just admins. With this
+	// at manage_server, a non-admin's session never loads any plugin CSS/JS
+	// at all, so the theme silently never appears for anyone else -- found
+	// the hard way when a stash-users account loaded with no theme and a
+	// console "plugins requires the manage_server permission" error. The
+	// resolver (pkg/plugin.Plugin) returns only id/name/version/enabled,
+	// task and hook names, and CSS/JS asset paths -- plugin *setting values*
+	// (which can hold secrets, e.g. an API key) are a different field
+	// entirely (configuration.plugins) and stay redacted to {} for
+	// non-admins in config_scope.go. Do not widen this without re-checking
+	// pkg/plugin.Plugin hasn't grown a field that leaks settings values.
+	"plugins": PermViewLibrary,
+
 	// explicit admin-only reads (also the default, listed for documentation)
 	"logs":                        PermManageServer,
-	"plugins":                     PermManageServer,
 	"pluginTasks":                 PermManageServer,
 	"installedPackages":           PermManageServer,
 	"availablePackages":           PermManageServer,
